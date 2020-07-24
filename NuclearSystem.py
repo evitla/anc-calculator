@@ -11,7 +11,7 @@ class NuclearSystem:
         self.mass = mass1 * mass2 / (mass1 + mass2)
         self.const1, self.const2 = 41.8016, 1.43996468
 
-    def calculate_energy(self):
+    def calculate_energy(self, mode=None):
         mat_elems = MatrixElements(self.wf_params)
         L = mat_elems.overlap_matrix()
         H0 = mat_elems.kinetic_pot(self.const1, self.mass)
@@ -26,12 +26,15 @@ class NuclearSystem:
         inv_down, inv_up = np.linalg.inv(down), np.linalg.inv(up)
         new_H = np.matmul(np.matmul(inv_down, H), inv_up)
 
-        energies, new_H_eig_vectors = np.linalg.eig(new_H)
-        H_eig_vectors = np.matmul(inv_up, new_H_eig_vectors)
+        if mode is "bound_energy":
+            self.bound_energy = np.min(np.linalg.eigvals(new_H))
+        else:
+            energies, new_H_eig_vectors = np.linalg.eig(new_H)
+            H_eig_vectors = np.matmul(inv_up, new_H_eig_vectors)
 
-        idx_sort = np.argsort(energies)
-        self.energies = energies[idx_sort]
-        self.C = H_eig_vectors[:, idx_sort]
+            idx_sort = np.argsort(energies)
+            self.energies = energies[idx_sort]
+            self.C = H_eig_vectors[:, idx_sort]
 
 if __name__ == "__main__":
     A, Z = 99, 49
@@ -43,5 +46,5 @@ if __name__ == "__main__":
     wf_params = [L, N, t, alpha0, b]
     potential_params = [V0, Vso, S, J, R0, R0, a0, a0]
     In99_p = NuclearSystem(wf_params, system_params, potential_params)
-    In99_p.calculate_energy()
-    print(In99_p.energies)
+    In99_p.calculate_energy(mode="bound_energy")
+    print(In99_p.E_bs)
